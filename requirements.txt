@@ -1,0 +1,21 @@
+numpy==1.26.4
+pandas==2.2.3
+
+transformers==4.47.1
+accelerate>=1.0.0,<2
+huggingface-hub>=0.23,<0.35
+safetensors>=0.4,<1.0
+sentencepiece>=0.1.99
+
+datasets>=3.0,<4
+pyarrow>=10,<19
+
+tqdm>=4.66
+sympy>=1.12
+pylatexenc>=2.10
+
+# Install PyTorch separately with the correct CUDA wheel if needed.
+# Example (CUDA 12.1):
+# pip install --index-url https://download.pytorch.org/whl/cu121 torch==2.5.1
+# Otherwise, the line below installs the default wheel for your platform.
+torch==2.5.1

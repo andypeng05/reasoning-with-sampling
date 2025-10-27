@@ -39,8 +39,7 @@ class AutoregressiveSampler:
     # returns log probs
     @torch.no_grad()
     def next_token(self, prefix):
-        device = self.device
-        torch_prefix = torch.tensor([prefix], dtype=torch.long, device=device)
+        torch_prefix = torch.tensor([prefix], dtype=torch.long)
         prefix_cond = torch_prefix if torch_prefix.size(1) <= self.block_size else torch_prefix[:, -self.block_size:]
         output = self.model(prefix_cond)
         logits = output.logits
@@ -66,9 +65,8 @@ def dist_temp_scale(logit_p, temp):
 # low-temperature sampling proposal distribution
 def naive_temp(p : AutoregressiveSampler, context, temp, seq_len):
     c = len(context)
-    device = p.device
     tokenizer = p.tokenizer
-    input_ids = torch.tensor([context], dtype=torch.long, device=device)
+    input_ids = torch.tensor([context], dtype=torch.long)
     output = p.model.generate(
         input_ids=input_ids,
         max_new_tokens=seq_len - c,

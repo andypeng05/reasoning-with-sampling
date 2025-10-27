@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
     print("dataset done")
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_str, trust_remote_code = True)
-    hf_model = transformers.AutoModelForCausalLM.from_pretrained(model_str, torch_dtype="auto", device_map="auto", trust_remote_code = True).to(device)
+    hf_model = transformers.AutoModelForCausalLM.from_pretrained(model_str, torch_dtype="auto", device_map="auto", trust_remote_code = True)
     autoreg_sampler = AutoregressiveSampler(hf_model, tokenizer, device)
 
     print("loaded models")
@@ -93,7 +93,7 @@ if __name__ == "__main__":
         answer = data["answer"]
 
         input_text = format_prompt(question, model, tokenizer, cot)
-        input_ids = tokenizer.encode(input_text, return_tensors="pt").to(device)
+        input_ids = tokenizer.encode(input_text, return_tensors="pt")
         prefx = [idx.item() for idx in input_ids[0]]
 
         naive_temp_output = hf_model.generate(input_ids, max_new_tokens=3072, 
@@ -114,12 +114,12 @@ if __name__ == "__main__":
         print(len(std_output))
         print(len(naive_temp_output))
         print(len(mcmc_power_samp_output))
-        print(tokenizer.decode(torch.tensor([mcmc_power_samp_output], dtype=torch.long, device=device).squeeze().to("cpu"), skip_special_tokens=True))
+        print(tokenizer.decode(torch.tensor([mcmc_power_samp_output], dtype=torch.long).squeeze().to("cpu"), skip_special_tokens=True))
         print("mcmc done")
 
         naive_generated_ids = naive_temp_output[0][:, len(input_ids[0]):].squeeze().to("cpu")
         std_generated_ids = std_output[0][:, len(input_ids[0]):].squeeze().to("cpu")
-        mcmc_power_samp_ids = torch.tensor([mcmc_power_samp_output], dtype=torch.long, device=device).squeeze().to("cpu")
+        mcmc_power_samp_ids = torch.tensor([mcmc_power_samp_output], dtype=torch.long).squeeze().to("cpu")
 
         naive_completion = tokenizer.decode(naive_generated_ids, skip_special_tokens=True)
         std_completion = tokenizer.decode(std_generated_ids, skip_special_tokens=True)
