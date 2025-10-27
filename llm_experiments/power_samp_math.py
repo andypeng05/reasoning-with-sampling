@@ -1,4 +1,5 @@
 import os
+import gc
 
 from contextlib import nullcontext
 from glob import glob
@@ -82,7 +83,11 @@ if __name__ == "__main__":
     autoreg_sampler = AutoregressiveSampler(hf_model, tokenizer, device)
 
     print("loaded models")
-    results = []
+    # Stream rows directly to CSV (append mode) to avoid growing RAM
+    save_path = os.path.join(
+        save_str,
+        model+"_math_base_power_samp_results_" + str(mcmc_steps) + "_" + str(temp) + "_" + str(args.batch_idx)  + "_" + str(args.seed) + ".csv"
+    )
 
     start = 100*args.batch_idx
     end = 100*(args.batch_idx+1)
@@ -137,7 +142,7 @@ if __name__ == "__main__":
         print(f'Acceptance: {acceptance_ratio}')
 
 
-        results.append({
+        row = {
             "question": question,
             "correct_answer": answer,
             "naive_completion": naive_completion,
@@ -146,11 +151,23 @@ if __name__ == "__main__":
             "std_answer": std_answer,
             "mcmc_completion": mcmc_completion,
             "mcmc_answer": mcmc_answer,
-        })
+        }
+        df_row = pd.DataFrame([row])
+        write_header = not os.path.exists(save_path) or os.path.getsize(save_path) == 0
+        df_row.to_csv(save_path, mode='a', header=write_header, index=False)
+
+        # free large tensors between problems
+        try:
+            del naive_temp_output, std_output, mcmc_power_samp_ids
+            del naive_generated_ids, std_generated_ids, mcmc_power_samp_output
+        except Exception:
+            pass
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     
-    df = pd.DataFrame(results)
-    df.to_csv(os.path.join(save_str, model+"_math_base_power_samp_results_" + str(mcmc_steps) + "_" + str(temp) + "_" + str(args.batch_idx)  + "_" + str(args.seed) + ".csv"), index=False)
+    # rows already written incrementally
     
 
 
